@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilmott QF 13 &mdash; Portfolio Management, VaR &amp; Risk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a; --bg-card: #0d1117; --bg-code: #161b22;
+            --text-primary: #e6edf3; --text-secondary: #8b949e;
+            --accent: #fbbf24; --accent-dim: #fbbf2444; --accent-glow: #fbbf2433;
+            --accent-2: #f472b6; --accent-3: #a78bfa; --accent-4: #34d399;
+            --accent-5: #60a5fa;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-body); font-size: 17px; line-height: 1.7; overflow-x: hidden; }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1.5rem; text-align: center; position: relative; }
+        .hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+        .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-bottom: 1rem; }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin-bottom: 2rem; }
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 2.5rem; }
+        .tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-dim); white-space: nowrap; }
+        .pipeline { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 1rem; max-width: var(--max-width); }
+        .pipeline-step { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.3rem 0.7rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); white-space: nowrap; }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+        .slide { min-height: 100vh; max-width: var(--max-width); margin: 0 auto; padding: 4rem 1.5rem; position: relative; display: flex; flex-direction: column; justify-content: center; }
+        .slide-number { font-family: var(--font-display); font-size: 5rem; font-weight: 700; color: var(--accent-dim); position: absolute; top: 2rem; right: 1.5rem; line-height: 1; user-select: none; }
+        .slide h2 { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; color: var(--accent); margin-bottom: 1.5rem; line-height: 1.25; }
+        .slide h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+        .slide code { background: var(--bg-code); padding: 0.1rem 0.35rem; border-radius: 3px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent); }
+        .diagram-grid { display: grid; gap: 0.75rem; margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .diagram-panel { padding: 1rem; background: var(--bg-code); border: 1px solid var(--border); border-radius: 6px; }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel.r { border-left: 3px solid var(--accent-2); }
+        .diagram-panel.p { border-left: 3px solid var(--accent-3); }
+        .diagram-panel.g { border-left: 3px solid var(--accent-4); }
+        .diagram-panel.b { border-left: 3px solid var(--accent-5); }
+        .diagram-panel h4 { font-family: var(--font-display); font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .diagram-panel.r h4 { color: var(--accent-2); }
+        .diagram-panel.p h4 { color: var(--accent-3); }
+        .diagram-panel.g h4 { color: var(--accent-4); }
+        .diagram-panel.b h4 { color: var(--accent-5); }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.9rem; }
+        .callout { background: var(--bg-card); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+        .callout p { margin-bottom: 0; }
+        .callout .callout-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+        .quote { font-family: var(--font-display); font-size: 1.1rem; font-style: italic; color: var(--text-primary); padding: 1rem 1.5rem; border-left: 3px solid var(--accent); background: var(--bg-card); margin: 1.25rem 0; border-radius: 0 8px 8px 0; }
+        .quote .attr { display: block; margin-top: 0.5rem; font-style: normal; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        .canvas-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 1.25rem 0; overflow-x: auto; }
+        .canvas-wrap canvas, .canvas-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+        .control-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1.25rem 0; }
+        .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .control-row label { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); min-width: 160px; }
+        .control-row input[type="range"] { flex: 1; min-width: 150px; accent-color: var(--accent); }
+        .control-row select, .control-row input[type="number"] { background: var(--bg-code); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; padding: 0.3rem 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; }
+        .control-row .val { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 80px; text-align: right; }
+        .btn { font-family: var(--font-mono); font-size: 0.8rem; padding: 0.4rem 0.9rem; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; transition: background 0.15s ease; }
+        .btn:hover { background: rgba(251,191,36,0.25); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn.secondary { background: var(--bg-code); color: var(--text-secondary); border-color: var(--border); }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+        .metric { background: var(--bg-code); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.8rem; text-align: center; }
+        .metric .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; }
+        .metric .metric-value { font-family: var(--font-display); font-size: 1.25rem; color: var(--accent); font-weight: 600; margin-top: 0.2rem; }
+        .contents-list { list-style: none; padding-left: 0; counter-reset: contents; }
+        .contents-list li { counter-increment: contents; padding: 0.6rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before { content: counter(contents, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 2rem; }
+        .contents-list a { color: var(--text-primary); text-decoration: none; }
+        .contents-list a:hover { color: var(--accent); }
+        .footer { text-align: center; padding: 3rem 1.5rem; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); max-width: var(--max-width); margin: 0 auto; }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .katex { color: var(--text-primary); }
+        .katex-display { margin: 1rem 0; overflow-x: auto; overflow-y: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0; }
+        th { background: var(--bg-code); color: var(--accent); font-weight: 600; text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); font-family: var(--font-display); }
+        td { padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3, .diagram-grid.cols-4 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">Paul Wilmott Introduces Quantitative Finance &mdash; Deck 13</div>
+    <h1>Portfolio Management, VaR &amp; <span class="accent">Risk</span></h1>
+    <p class="subtitle">From the Kelly criterion to Markowitz, CAPM, value-at-risk, credit risk and the disasters that taught the industry to take all of this seriously.</p>
+
+    <div class="tags">
+        <span class="tag">Kelly</span><span class="tag">diversification</span>
+        <span class="tag">MPT</span><span class="tag">CAPM</span>
+        <span class="tag">VaR</span><span class="tag">Merton</span>
+        <span class="tag">Poisson default</span><span class="tag">copulas</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">$\mu, \Sigma$</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">frontier</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">CAPM $\beta$</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">VaR / ES</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">credit + tails</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Lessons from gambling: Kelly &amp; sports arbitrage</a></li>
+        <li><a href="#slide-02">Diversification &mdash; the one free lunch</a></li>
+        <li><a href="#slide-03">Modern Portfolio Theory</a></li>
+        <li><a href="#slide-04">CAPM and $\beta$</a></li>
+        <li><a href="#slide-05">Value at Risk &mdash; the parametric definition</a></li>
+        <li><a href="#slide-06">VaR for derivatives</a></li>
+        <li><a href="#slide-07">Credit risk &mdash; the Merton model</a></li>
+        <li><a href="#slide-08">Default as a Poisson process</a></li>
+        <li><a href="#slide-09">Copulas, CrashMetrics and disasters</a></li>
+        <li><a href="#slide-10">Interactive: efficient frontier &amp; VaR explorer</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Lessons from Gambling</h2>
+    <p>Wilmott opens the portfolio chapters with the surprising claim that the best place to learn position sizing is the casino. Three takeaways:</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Blackjack &amp; card counting</h4>
+            <p>Edward Thorp showed that a player who tracks the deck can flip the house edge in their favour by a small margin. The game isn't won with one bet &mdash; it's won by sizing many marginal-edge bets correctly.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>The Kelly criterion</h4>
+            <p>For a binary bet that pays $b$:1 with probability $p$:</p>
+            <p>$$f^* = \frac{p(b+1) - 1}{b}.$$</p>
+            <p>$f^*$ is the fraction of wealth to risk &mdash; it maximises the expected log-growth rate.</p>
+        </div>
+        <div class="diagram-panel p">
+            <h4>Sports arbitrage</h4>
+            <p>If three bookmakers quote prices on the same outcome that, summed across all outcomes, give a payoff less than 1 in <em>every</em> state, take all sides. A genuine arb &mdash; no probability assumed.</p>
+        </div>
+    </div>
+
+    <p>The recurring lesson: <strong>edge is necessary but not sufficient</strong>. You also need to size the bet so that bad luck doesn't ruin you before good luck pays out. The mathematics of sizing is what generalises to portfolio construction.</p>
+
+    <div class="callout">
+        <div class="callout-label">Companion philosophy</div>
+        <p>This deck collapses Wilmott's chapters 20 through 26 into one tour. The interactive widget on slide 10 builds a two-asset efficient frontier, marks the current portfolio, and shows the VaR cut-off on the corresponding return PDF.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Diversification &mdash; the One Free Lunch</h2>
+    <p>Variance of a weighted sum of correlated returns:</p>
+    <p>$$\mathrm{Var}\!\left(\sum_i w_i R_i\right) = \sum_i w_i^2 \sigma_i^2 + \sum_{i \ne j} w_i w_j\, \rho_{ij}\, \sigma_i \sigma_j.$$</p>
+
+    <p>The cross terms can be positive, negative or zero. If we mix assets that aren't perfectly correlated, the portfolio variance drops <em>below</em> what you'd get from any of the individual assets. The expected return is just the weighted average &mdash; no degradation. Hence "free lunch".</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel b">
+            <h4>Two-asset case</h4>
+            <p>For a portfolio with weight $w$ in asset 1 and $1-w$ in asset 2:</p>
+            <p>$$\sigma_P^2 = w^2 \sigma_1^2 + (1-w)^2 \sigma_2^2 + 2 w (1-w) \rho \sigma_1 \sigma_2.$$</p>
+            <p>Minimum at</p>
+            <p>$$w^* = \frac{\sigma_2^2 - \rho \sigma_1 \sigma_2}{\sigma_1^2 + \sigma_2^2 - 2 \rho \sigma_1 \sigma_2}.$$</p>
+        </div>
+        <div class="diagram-panel r">
+            <h4>Many-asset case</h4>
+            <p>If all $n$ assets have the same vol $\sigma$ and pairwise correlation $\rho$, an equally-weighted portfolio has</p>
+            <p>$$\sigma_P^2 = \frac{\sigma^2}{n} + \rho \sigma^2 \frac{n-1}{n}.$$</p>
+            <p>As $n \to \infty$ this tends to $\rho \sigma^2$ &mdash; you can diversify away idiosyncratic risk but never the systemic part.</p>
+        </div>
+    </div>
+
+    <p>The "$\rho \sigma^2$ floor" is exactly what 2008 demonstrated: every credit-sensitive name suddenly correlated near 1, and the diversification benefit that risk models had assumed evaporated.</p>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>Modern Portfolio Theory</h2>
+    <p>Markowitz (1952) made the leap from descriptive ("here is what diversification does") to prescriptive ("here is the best portfolio"). For $n$ assets with expected returns $\boldsymbol\mu$ and covariance $\Sigma$, find weights $\boldsymbol w$ to</p>
+    <p>$$\min_{\boldsymbol w} \boldsymbol w^\top \Sigma \boldsymbol w \quad \text{subject to } \boldsymbol w^\top \boldsymbol\mu = \mu_P, \;\; \boldsymbol w^\top \mathbf{1} = 1.$$</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>The efficient frontier</h4>
+            <p>The set of $(\sigma_P, \mu_P)$ pairs achievable by an efficient portfolio &mdash; one that minimises variance for its return. A hyperbola opening to the right in $(\sigma, \mu)$-space.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Minimum-variance portfolio</h4>
+            <p>The leftmost point on the frontier:</p>
+            <p>$$\boldsymbol w_\text{MV} = \frac{\Sigma^{-1} \mathbf 1}{\mathbf 1^\top \Sigma^{-1} \mathbf 1}.$$</p>
+            <p>The least risky combination of the risky assets.</p>
+        </div>
+        <div class="diagram-panel p">
+            <h4>Tangency portfolio</h4>
+            <p>Introduce a risk-free asset at rate $R_f$. Draw the line from $(0, R_f)$ tangent to the frontier &mdash; the tangent point is the <em>market portfolio</em>:</p>
+            <p>$$\boldsymbol w_\text{tan} \propto \Sigma^{-1}(\boldsymbol\mu - R_f \mathbf 1).$$</p>
+        </div>
+    </div>
+
+    <p>Everything investable then lives on a single straight line in $(\sigma, \mu)$ space &mdash; the <strong>capital market line</strong>. You pick your risk tolerance, mix the risk-free asset with the tangency portfolio in the right ratio, and you're done. This is the two-fund separation theorem.</p>
+
+    <div class="callout">
+        <div class="callout-label">What MPT assumes</div>
+        <p>Returns are characterised entirely by mean and variance. Investors care only about those two moments. The world is normally distributed and stationary. Each of these is false; all of them are useful first approximations.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>CAPM and $\beta$</h2>
+    <p>If every investor solves the Markowitz problem with the same $\boldsymbol\mu$, $\Sigma$ and $R_f$, they all hold the same tangency portfolio &mdash; which therefore <em>has</em> to be the market portfolio $M$. CAPM is the equilibrium statement that follows:</p>
+    <p>$$\boxed{\;\mathbb{E}[R_i] = R_f + \beta_i\, (\mathbb{E}[R_M] - R_f)\;}$$</p>
+
+    <p>with</p>
+    <p>$$\beta_i = \frac{\mathrm{Cov}(R_i, R_M)}{\mathrm{Var}(R_M)}.$$</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel b">
+            <h4>What $\beta$ measures</h4>
+            <ul>
+                <li>$\beta = 0$: uncorrelated with the market.</li>
+                <li>$\beta = 1$: moves one-for-one with the market.</li>
+                <li>$\beta > 1$: amplifies market moves (high-tech stocks).</li>
+                <li>$\beta < 0$: hedges the market (gold during a crash, occasionally).</li>
+            </ul>
+        </div>
+        <div class="diagram-panel r">
+            <h4>The security market line</h4>
+            <p>CAPM lays out expected returns linearly in $\beta$. Stocks that <em>plot</em> above the line are "cheap" (positive alpha); below the line, "expensive". This was the first systematic way to talk about whether a stock was fairly priced relative to its risk.</p>
+        </div>
+    </div>
+
+    <p>Half a century of empirical work has shown CAPM is a useful but imperfect benchmark &mdash; the realised return on high-$\beta$ stocks is actually <em>lower</em> than CAPM predicts, while small-cap and value stocks earn unexplained premia. Fama&ndash;French added size and value factors; modern factor models pile on momentum, profitability, low-vol and more.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why $\beta$ still matters</div>
+        <p>Even if CAPM mis-prices, every risk system on every trading floor still attributes P&amp;L to "market beta + residual." It's the language of risk, regardless of how well the model fits.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>Value at Risk &mdash; the Parametric Definition</h2>
+    <p>VaR$_\alpha$ over horizon $h$ is the loss that is exceeded with probability $1 - \alpha$:</p>
+    <p>$$\Pr(L > \mathrm{VaR}_\alpha) = 1 - \alpha.$$</p>
+
+    <p>For $\alpha = 0.95$ and $h = 1$ day, VaR is the loss that, on average, your portfolio exceeds one trading day in twenty.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Single asset, normal returns</h4>
+            <p>If $R \sim \mathcal{N}(\mu, \sigma^2)$ and we hold notional $V$:</p>
+            <p>$$\mathrm{VaR}_\alpha = V\, (-\mu + \sigma z_\alpha),$$</p>
+            <p>where $z_{0.95} \approx 1.645$, $z_{0.99} \approx 2.326$.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Portfolio of normal assets</h4>
+            <p>If returns are jointly normal with covariance $\Sigma$ and weights $\boldsymbol w$, the portfolio variance is</p>
+            <p>$$\sigma_P^2 = \boldsymbol w^\top \Sigma \boldsymbol w,$$</p>
+            <p>and VaR uses $\sigma_P$ in the single-asset formula.</p>
+        </div>
+    </div>
+
+    <h3>Why VaR is controversial</h3>
+    <ul>
+        <li><strong>It's not coherent.</strong> Combining two portfolios can produce a VaR larger than the sum of the individual VaRs &mdash; the opposite of what diversification should give.</li>
+        <li><strong>It says nothing about the tail.</strong> Two portfolios with the same 95% VaR can lose dramatically different amounts in the 1% tail. <em>Expected Shortfall</em> $\mathrm{ES}_\alpha = \mathbb{E}[L \mid L > \mathrm{VaR}_\alpha]$ fixes both problems and is the regulatory standard under FRTB.</li>
+        <li><strong>Normality.</strong> Empirical returns have fat tails; parametric normal VaR systematically underestimates risk in stressed markets.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">In practice</div>
+        <p>Big banks compute VaR three ways: parametric (above), historical simulation (re-price the book under the last 250 days), and full Monte Carlo. Each gives a different number; risk committees argue about which is right.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>VaR for Derivatives</h2>
+    <p>Derivative payoffs aren't linear in the underlying. Three flavours of VaR computation, in increasing accuracy and cost:</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Delta approximation</h4>
+            <p>Treat the derivative position as if it were $\Delta$ units of the underlying:</p>
+            <p>$$\Delta V \approx \Delta \cdot \Delta S.$$</p>
+            <p>VaR is then the underlying VaR scaled by $|\Delta|$. Cheap; misses convexity.</p>
+        </div>
+        <div class="diagram-panel p">
+            <h4>Delta&ndash;gamma</h4>
+            <p>Add a second-order term:</p>
+            <p>$$\Delta V \approx \Delta \cdot \Delta S + \tfrac{1}{2} \Gamma\, (\Delta S)^2.$$</p>
+            <p>Captures the asymmetry of an option position. For at-the-money options, $\Gamma$ is what makes the loss distribution skewed.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Full Monte Carlo</h4>
+            <p>Simulate $N$ moves of the underlying(s) over the horizon, reprice the derivative from scratch on each, and read off the 5th percentile. Slow, but no Taylor truncation.</p>
+        </div>
+    </div>
+
+    <p>For an at-the-money long-call position, delta-only VaR is symmetric, but the actual P&amp;L distribution is positively skewed (limited downside, unbounded upside). Delta&ndash;gamma captures most of this; full MC gets the rest.</p>
+
+    <div class="callout">
+        <div class="callout-label">Sensitivity to vol</div>
+        <p>For derivatives, vol changes are themselves a risk factor &mdash; <em>vega</em>. Modern VaR systems include vol shocks as one of the simulated dimensions; for an option book the vega VaR can dwarf the delta VaR in a vol-spike scenario.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>Credit Risk &mdash; the Merton Model</h2>
+    <p>Robert Merton (1974) observed that a company's equity behaves like a <em>call option on its assets</em>. The equity holders get the residual after debt is paid; if assets don't cover debt, equity is worthless and the company defaults.</p>
+
+    <p>Let $V_t$ be the value of the firm's assets, $D$ the face value of debt due at $T$. At maturity:</p>
+    <p>$$\text{equity}(T) = \max(V_T - D, 0).$$</p>
+
+    <p>If $V$ follows GBM, equity is a Black&ndash;Scholes call on $V$ with strike $D$. From an observable equity price, you can back out an implied $V_0$ and asset volatility &mdash; and from those, a default probability:</p>
+    <p>$$\Pr(\text{default}) = \Pr(V_T < D) = N\!\left(-\frac{\log(V_0/D) + (\mu - \sigma^2/2)T}{\sigma \sqrt{T}}\right).$$</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel b">
+            <h4>What the model gives you</h4>
+            <ul>
+                <li>A <em>structural</em> reason for default &mdash; firm value crossing a barrier.</li>
+                <li>A consistent picture of equity, debt, and default probability.</li>
+                <li>Distance-to-default measure, used by KMV/Moody's.</li>
+            </ul>
+        </div>
+        <div class="diagram-panel r">
+            <h4>What it misses</h4>
+            <ul>
+                <li>Default usually happens <em>before</em> maturity; first-passage extensions (Black&ndash;Cox) fix this.</li>
+                <li>Assumes one debt maturity; real firms have layered capital structures.</li>
+                <li>Estimating $V$ is hard because $V$ isn't observed.</li>
+            </ul>
+        </div>
+    </div>
+
+    <p>Despite the limitations, the Merton picture is the conceptual basis for almost every "structural" credit model in use today.</p>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Default as a Poisson Process</h2>
+    <p>The other branch of credit modelling: <strong>reduced-form</strong> models. Don't try to explain <em>why</em> default happens. Just model the default time $\tau$ as the first arrival of a Poisson process with intensity $\lambda(t)$:</p>
+    <p>$$\Pr(\tau > t) = \exp\!\left(-\int_0^t \lambda(s)\, ds\right).$$</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Risky bond price</h4>
+            <p>If a corporate bond pays 1 at $T$ unless default occurs first (in which case it pays a recovery $R$), the price is approximately</p>
+            <p>$$B = e^{-(r+\lambda)T} + R \cdot \text{(default contribution)}.$$</p>
+            <p>For zero recovery, $B = e^{-(r+\lambda)T}$ &mdash; default intensity adds to the discount rate.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Reading $\lambda$ from spreads</h4>
+            <p>The credit spread $s$ of a bond satisfies $s \approx \lambda (1 - R)$. A 200 bp spread with 40% recovery implies a default intensity around 3.3% per year.</p>
+        </div>
+    </div>
+
+    <p>Reduced-form models are the workhorse of credit-default-swap (CDS) pricing. The market quotes CDS premia, and traders back out a curve of $\lambda(t)$ &mdash; just as fixed-income desks back out a yield curve.</p>
+
+    <div class="callout">
+        <div class="callout-label">Structural vs reduced-form</div>
+        <p>Structural models say <em>what</em> defaults; reduced-form models say <em>when</em>. In practice quants use both &mdash; structural for capital and stress tests (where the "why" matters), reduced-form for pricing (where the "when" is what trades).</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>Copulas, CrashMetrics and Derivatives Disasters</h2>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel p">
+            <h4>Copulas</h4>
+            <p>A way to glue marginals together to form a joint distribution. The Gaussian copula:</p>
+            <p>$$C(u_1, u_2) = N_2\!\left(N^{-1}(u_1), N^{-1}(u_2); \rho\right).$$</p>
+            <p>Famously used to price CDOs pre-2008 &mdash; "the formula that killed Wall Street."</p>
+        </div>
+        <div class="diagram-panel r">
+            <h4>CrashMetrics</h4>
+            <p>Wilmott's framework for the stress scenario your normal-world risk model doesn't cover. Don't smooth the move probabilistically; ask <em>what happens if the market drops 20% overnight</em> and your hedges break?</p>
+        </div>
+        <div class="diagram-panel b">
+            <h4>What disasters share</h4>
+            <ul>
+                <li>Big leveraged position in a one-way bet.</li>
+                <li>A correlation assumption that held until it didn't.</li>
+                <li>Liquidity that dried up exactly when needed.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Derivative disasters &mdash; in headlines</h3>
+    <table>
+        <thead><tr><th>Year</th><th>Who</th><th>What broke</th></tr></thead>
+        <tbody>
+            <tr><td>1994</td><td>Orange County</td><td>Leveraged reverse-repo position on rates; Fed hikes wiped out US$1.6bn.</td></tr>
+            <tr><td>1995</td><td>Barings</td><td>Nick Leeson short straddle on Nikkei; Kobe earthquake spiked vol; US$1.4bn loss closed the bank.</td></tr>
+            <tr><td>1998</td><td>LTCM</td><td>Convergence trades on rates and credit; Russia defaulted; correlations went to 1.</td></tr>
+            <tr><td>2008</td><td>Sub-prime CDOs</td><td>Gaussian-copula default correlation drastically underestimated tail dependence.</td></tr>
+            <tr><td>2012</td><td>JPM "London Whale"</td><td>Synthetic credit positions exploded; US$6bn loss.</td></tr>
+        </tbody>
+    </table>
+
+    <p>Every textbook chapter on portfolio risk should end with a chapter on disasters, because what makes them disasters isn't the maths failing &mdash; it's the maths working perfectly <em>until the assumptions it relied on stopped being true</em>.</p>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Interactive: Efficient Frontier &amp; VaR Explorer</h2>
+    <p>A two-asset portfolio. Pick the expected returns, volatilities, correlation and the weight in asset 1; the widget computes the portfolio mean, vol, 95%/99% VaR and Sharpe ratio. The left chart plots the efficient frontier in $(\sigma, \mu)$ space with the current portfolio marked. The right chart is the normal return PDF with the 95% VaR cut-off shaded.</p>
+
+    <div class="canvas-wrap">
+        <canvas id="portf-canvas" width="860" height="320"></canvas>
+    </div>
+
+    <div class="control-panel">
+        <div class="control-row">
+            <label for="mu1-slider">$\mu_1$ (%)</label>
+            <input type="range" id="mu1-slider" min="-5" max="20" step="0.5" value="8">
+            <span class="val" id="mu1-val">8.00%</span>
+        </div>
+        <div class="control-row">
+            <label for="mu2-slider">$\mu_2$ (%)</label>
+            <input type="range" id="mu2-slider" min="-5" max="20" step="0.5" value="5">
+            <span class="val" id="mu2-val">5.00%</span>
+        </div>
+        <div class="control-row">
+            <label for="sig1-slider">$\sigma_1$ (%)</label>
+            <input type="range" id="sig1-slider" min="2" max="40" step="0.5" value="20">
+            <span class="val" id="sig1-val">20.00%</span>
+        </div>
+        <div class="control-row">
+            <label for="sig2-slider">$\sigma_2$ (%)</label>
+            <input type="range" id="sig2-slider" min="2" max="40" step="0.5" value="12">
+            <span class="val" id="sig2-val">12.00%</span>
+        </div>
+        <div class="control-row">
+            <label for="rho-slider">Correlation $\rho$</label>
+            <input type="range" id="rho-slider" min="-0.99" max="0.99" step="0.01" value="0.2">
+            <span class="val" id="rho-val">0.20</span>
+        </div>
+        <div class="control-row">
+            <label for="w-slider">Weight $w_1$</label>
+            <input type="range" id="w-slider" min="-0.5" max="1.5" step="0.01" value="0.5">
+            <span class="val" id="w-val">0.50</span>
+        </div>
+        <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Mean $\mu_P$</div><div class="metric-value" id="m-mu">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">Vol $\sigma_P$</div><div class="metric-value" id="m-sig">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">95% VaR (1yr)</div><div class="metric-value" id="m-v95">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">99% VaR (1yr)</div><div class="metric-value" id="m-v99">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">Sharpe ($R_f$=2%)</div><div class="metric-value" id="m-sharpe">&mdash;</div></div>
+        </div>
+    </div>
+
+    <p>Slide the correlation toward $-1$ and watch the frontier sag toward the y-axis &mdash; perfect anti-correlation lets you build a portfolio with zero variance. Slide $w_1$ past 1 or below 0 and you're short-selling; the portfolio leaves the no-short-sale frontier and lives on its hyperbolic extension.</p>
+</section>
+
+<footer class="footer">
+    <p>Deck 13 of the <a href="https://github.com/BrendanJamesLynskey/Wilmott_QF_Hub">Paul Wilmott Introduces Quantitative Finance &mdash; Companion Series</a>.</p>
+    <p style="margin-top: 0.6rem;">Companion to chapters 20&ndash;26 of <em>Paul Wilmott Introduces Quantitative Finance</em>, 2nd edition (Wiley, 2007).</p>
+</footer>
+
+<script>
+(function() {
+    const $ = id => document.getElementById(id);
+    const sMu1 = $('mu1-slider'), sMu2 = $('mu2-slider'),
+          sSig1 = $('sig1-slider'), sSig2 = $('sig2-slider'),
+          sRho = $('rho-slider'), sW = $('w-slider');
+    const vMu1 = $('mu1-val'), vMu2 = $('mu2-val'),
+          vSig1 = $('sig1-val'), vSig2 = $('sig2-val'),
+          vRho = $('rho-val'), vW = $('w-val');
+    const mMu = $('m-mu'), mSig = $('m-sig'),
+          mV95 = $('m-v95'), mV99 = $('m-v99'), mSh = $('m-sharpe');
+    const canvas = $('portf-canvas'), ctx = canvas.getContext('2d');
+
+    function fmt(x, dp) { return x.toFixed(dp == null ? 2 : dp); }
+
+    // Standard normal PDF and inverse CDF (Acklam approximation)
+    function normPdf(z) { return Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI); }
+    function invNorm(p) {
+        // Approximation good to ~1e-9 in the body
+        const a = [-3.969683028665376e+01, 2.209460984245205e+02,
+                   -2.759285104469687e+02, 1.383577518672690e+02,
+                   -3.066479806614716e+01, 2.506628277459239e+00];
+        const b = [-5.447609879822406e+01, 1.615858368580409e+02,
+                   -1.556989798598866e+02, 6.680131188771972e+01,
+                   -1.328068155288572e+01];
+        const c = [-7.784894002430293e-03, -3.223964580411365e-01,
+                   -2.400758277161838e+00, -2.549732539343734e+00,
+                   4.374664141464968e+00, 2.938163982698783e+00];
+        const d = [7.784695709041462e-03, 3.224671290700398e-01,
+                   2.445134137142996e+00, 3.754408661907416e+00];
+        const plow = 0.02425, phigh = 1 - plow;
+        let q, r;
+        if (p < plow) {
+            q = Math.sqrt(-2 * Math.log(p));
+            return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                   ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+        }
+        if (p <= phigh) {
+            q = p - 0.5; r = q * q;
+            return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q /
+                   (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+        }
+        q = Math.sqrt(-2 * Math.log(1 - p));
+        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    }
+
+    function draw() {
+        const mu1 = +sMu1.value / 100, mu2 = +sMu2.value / 100,
+              s1 = +sSig1.value / 100, s2 = +sSig2.value / 100,
+              rho = +sRho.value, w = +sW.value;
+        const Rf = 0.02;
+
+        vMu1.textContent = fmt(+sMu1.value) + '%';
+        vMu2.textContent = fmt(+sMu2.value) + '%';
+        vSig1.textContent = fmt(+sSig1.value) + '%';
+        vSig2.textContent = fmt(+sSig2.value) + '%';
+        vRho.textContent = fmt(rho);
+        vW.textContent = fmt(w);
+
+        const muP = w * mu1 + (1 - w) * mu2;
+        const varP = w * w * s1 * s1 + (1 - w) * (1 - w) * s2 * s2 +
+                     2 * w * (1 - w) * rho * s1 * s2;
+        const sigP = Math.sqrt(Math.max(varP, 0));
+        const z95 = invNorm(0.95), z99 = invNorm(0.99);
+        const v95 = -muP + sigP * z95;
+        const v99 = -muP + sigP * z99;
+        const sharpe = sigP > 1e-9 ? (muP - Rf) / sigP : NaN;
+
+        mMu.textContent = (muP >= 0 ? '+' : '') + fmt(muP * 100) + '%';
+        mSig.textContent = fmt(sigP * 100) + '%';
+        mV95.textContent = fmt(v95 * 100) + '%';
+        mV99.textContent = fmt(v99 * 100) + '%';
+        mSh.textContent = isFinite(sharpe) ? fmt(sharpe) : '—';
+
+        // --- draw ---
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        const leftW = W * 0.55, rightW = W * 0.45;
+        const padT = 30, padB = 36, padL = 50, padR = 12;
+
+        // -- Left: efficient frontier in (sigma, mu) --
+        (function() {
+            const ws = [];
+            for (let i = 0; i <= 200; i++) ws.push(-0.5 + (1.5 - (-0.5)) * i / 200);
+            const pts = ws.map(ww => {
+                const m = ww * mu1 + (1 - ww) * mu2;
+                const v = ww * ww * s1 * s1 + (1 - ww) * (1 - ww) * s2 * s2 +
+                          2 * ww * (1 - ww) * rho * s1 * s2;
+                return { sig: Math.sqrt(Math.max(v, 0)), mu: m };
+            });
+            const sMin = 0, sMax = Math.max(s1, s2, ...pts.map(p => p.sig)) * 1.15;
+            const muMin = Math.min(mu1, mu2, ...pts.map(p => p.mu)) - 0.02;
+            const muMax = Math.max(mu1, mu2, ...pts.map(p => p.mu)) + 0.02;
+
+            const x2px = ss => padL + (ss - sMin) / (sMax - sMin) * (leftW - padL - padR);
+            const y2px = mm => padT + (H - padT - padB) - (mm - muMin) / (muMax - muMin) * (H - padT - padB);
+
+            // grid
+            ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const yy = padT + i / 4 * (H - padT - padB);
+                ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(leftW - padR, yy); ctx.stroke();
+                const xx = padL + i / 4 * (leftW - padL - padR);
+                ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, H - padB); ctx.stroke();
+            }
+
+            // zero-mu line
+            if (muMin < 0 && muMax > 0) {
+                ctx.strokeStyle = '#3a4252'; ctx.lineWidth = 1.5;
+                const y0 = y2px(0);
+                ctx.beginPath(); ctx.moveTo(padL, y0); ctx.lineTo(leftW - padR, y0); ctx.stroke();
+            }
+
+            // frontier
+            ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            pts.forEach((p, i) => {
+                const px = x2px(p.sig), py = y2px(p.mu);
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            });
+            ctx.stroke();
+
+            // mark the two single-asset portfolios
+            const markers = [
+                { sig: s1, mu: mu1, color: '#34d399', label: 'asset 1' },
+                { sig: s2, mu: mu2, color: '#60a5fa', label: 'asset 2' }
+            ];
+            markers.forEach(m => {
+                ctx.fillStyle = m.color;
+                ctx.beginPath();
+                ctx.arc(x2px(m.sig), y2px(m.mu), 4, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(m.label, x2px(m.sig) + 6, y2px(m.mu) + 4);
+            });
+
+            // current portfolio
+            ctx.fillStyle = '#f472b6';
+            ctx.beginPath();
+            ctx.arc(x2px(sigP), y2px(muP), 6, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // capital market line (from (0, Rf) tangent direction = best sharpe)
+            // approximate tangency
+            let bestS = -Infinity, bestW = NaN;
+            for (let i = 0; i < pts.length; i++) {
+                const p = pts[i];
+                if (p.sig < 1e-6) continue;
+                const sh = (p.mu - Rf) / p.sig;
+                if (sh > bestS) { bestS = sh; bestW = ws[i]; }
+            }
+            if (isFinite(bestS)) {
+                const tanW = bestW;
+                const tanMu = tanW * mu1 + (1 - tanW) * mu2;
+                const tanV = tanW * tanW * s1 * s1 + (1 - tanW) * (1 - tanW) * s2 * s2 +
+                             2 * tanW * (1 - tanW) * rho * s1 * s2;
+                const tanSig = Math.sqrt(Math.max(tanV, 0));
+                ctx.strokeStyle = '#a78bfa'; ctx.setLineDash([5, 3]); ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x2px(0), y2px(Rf));
+                ctx.lineTo(x2px(sMax), y2px(Rf + bestS * sMax));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.fillStyle = '#8b949e'; ctx.font = '11px JetBrains Mono';
+            ctx.fillText('efficient frontier', padL, padT - 10);
+            ctx.fillText('σ', leftW - padR - 8, H - 18);
+            ctx.save();
+            ctx.translate(14, padT + (H - padT - padB) / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('μ', 0, 0);
+            ctx.restore();
+        })();
+
+        // -- Right: return PDF with 95% VaR shaded --
+        (function() {
+            const x0 = leftW;
+            const plotW = rightW - padL - padR, plotH = H - padT - padB;
+            const range = Math.max(0.05, 4 * sigP);
+            const xMin = muP - range, xMax = muP + range;
+
+            const x2px = xx => x0 + padL + (xx - xMin) / (xMax - xMin) * plotW;
+            const y2px = yy => padT + plotH - yy * plotH;
+
+            // PDF samples
+            const Ns = 200;
+            const xs = [], ys = [];
+            for (let i = 0; i <= Ns; i++) {
+                const xx = xMin + (xMax - xMin) * i / Ns;
+                xs.push(xx);
+                const z = (xx - muP) / Math.max(sigP, 1e-9);
+                ys.push(normPdf(z) / Math.max(sigP, 1e-9));
+            }
+            const yMax = Math.max(...ys) * 1.1;
+            const yNorm = ys.map(y => y / yMax);
+
+            // grid
+            ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const yy = padT + i / 4 * plotH;
+                ctx.beginPath(); ctx.moveTo(x0 + padL, yy); ctx.lineTo(x0 + padL + plotW, yy); ctx.stroke();
+            }
+
+            // shade VaR region (returns < -v95 i.e. losses > v95)
+            const cutoff = -v95;
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.25)';
+            ctx.beginPath();
+            ctx.moveTo(x2px(xMin), y2px(0));
+            for (let i = 0; i < xs.length; i++) {
+                if (xs[i] <= cutoff) ctx.lineTo(x2px(xs[i]), y2px(yNorm[i]));
+            }
+            ctx.lineTo(x2px(Math.min(cutoff, xMax)), y2px(0));
+            ctx.closePath();
+            ctx.fill();
+
+            // PDF curve
+            ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < xs.length; i++) {
+                const px = x2px(xs[i]), py = y2px(yNorm[i]);
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // mean line
+            ctx.strokeStyle = '#34d399'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x2px(muP), padT); ctx.lineTo(x2px(muP), padT + plotH); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // VaR cutoff
+            ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 1.8;
+            ctx.beginPath(); ctx.moveTo(x2px(cutoff), padT); ctx.lineTo(x2px(cutoff), padT + plotH); ctx.stroke();
+
+            ctx.fillStyle = '#8b949e'; ctx.font = '11px JetBrains Mono';
+            ctx.fillText('return PDF, 95% VaR', x0 + padL, padT - 10);
+            ctx.fillStyle = '#f472b6';
+            ctx.fillText('VaR=' + fmt(v95 * 100) + '%', x2px(cutoff) - 50, padT + 14);
+            ctx.fillStyle = '#34d399';
+            ctx.fillText('μ', x2px(muP) + 4, padT + 14);
+        })();
+    }
+
+    [sMu1, sMu2, sSig1, sSig2, sRho, sW].forEach(el => el.addEventListener('input', draw));
+    draw();
+})();
+</script>
+</body>
+</html>

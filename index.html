@@ -6,7 +6,7 @@
     <title>Wilmott QF 13 &mdash; Portfolio Management, VaR &amp; Risk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
@@ -18,9 +18,9 @@
             --accent-2: #9c405e; --accent-3: #633d6a; --accent-4: #216749;
             --accent-5: #2a4679;
             --border: #cad1c0;
-            --font-display: 'Space Grotesk', sans-serif;
-            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-            --font-body: 'Inter', sans-serif;
+            --font-display: 'Libre Baskerville', sans-serif;
+            --font-mono: 'IBM Plex Mono', 'IBM Plex Mono', monospace;
+            --font-body: 'Source Sans 3', sans-serif;
             --max-width: 900px;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -634,7 +634,7 @@
                 ctx.beginPath();
                 ctx.arc(x2px(m.sig), y2px(m.mu), 4, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.font = '10px JetBrains Mono';
+                ctx.font = '10px IBM Plex Mono';
                 ctx.fillText(m.label, x2px(m.sig) + 6, y2px(m.mu) + 4);
             });
 
@@ -667,7 +667,7 @@
                 ctx.setLineDash([]);
             }
 
-            ctx.fillStyle = '#61695c'; ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#61695c'; ctx.font = '11px IBM Plex Mono';
             ctx.fillText('efficient frontier', padL, padT - 10);
             ctx.fillText('σ', leftW - padR - 8, H - 18);
             ctx.save();
@@ -736,7 +736,7 @@
             ctx.strokeStyle = '#9c405e'; ctx.lineWidth = 1.8;
             ctx.beginPath(); ctx.moveTo(x2px(cutoff), padT); ctx.lineTo(x2px(cutoff), padT + plotH); ctx.stroke();
 
-            ctx.fillStyle = '#61695c'; ctx.font = '11px JetBrains Mono';
+            ctx.fillStyle = '#61695c'; ctx.font = '11px IBM Plex Mono';
             ctx.fillText('return PDF, 95% VaR', x0 + padL, padT - 10);
             ctx.fillStyle = '#9c405e';
             ctx.fillText('VaR=' + fmt(v95 * 100) + '%', x2px(cutoff) - 50, padT + 14);
